@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zer0 AI</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0f0f0f;
+    color: white;
+    font-family: Arial;
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+}
+
+.container {
+    width: 750px;
+    max-width: 95%;
+    background: #181818;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+#mood {
+    text-align: center;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+#chatbox {
+    height: 500px;
+    overflow-y: auto;
+    background: #111;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.msg {
+    padding: 12px;
+    border-radius: 10px;
+    margin: 10px 0;
+    max-width: 80%;
+}
+
+.user {
+    background: #2d6cdf;
+    margin-left: auto;
+}
+
+.bot {
+    background: #2a2a2a;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+input {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+button {
+    padding: 14px 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.send {
+    background: #2d6cdf;
+    color: white;
+}
+
+.clear {
+    background: #d13c3c;
+    color: white;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>zer0</h1>
+    <div id="mood">Mood: Neutral</div>
+
+    <div id="chatbox"></div>
+
+    <div class="controls">
+        <input id="message" placeholder="Talk to zer0..." />
+        <button class="send" onclick="sendMessage()">Send</button>
+        <button class="clear" onclick="clearChat()">Clear</button>
+    </div>
+</div>
+
+<script>
+const API_URL = "https://zer0-ai-production.up.railway.app/chat";
+
+const chatbox = document.getElementById("chatbox");
+const mood = document.getElementById("mood");
+
+function addMessage(text, sender) {
+    const div = document.createElement("div");
+    div.className = `msg ${sender}`;
+    div.innerText = text;
+    chatbox.appendChild(div);
+    chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+function updateMood(text) {
+    const msg = text.toLowerCase();
+
+    if (msg.includes("joke")) {
+        mood.innerText = "Mood: Funny";
+    } else if (msg.includes("sad")) {
+        mood.innerText = "Mood: Supportive";
+    } else if (msg.includes("angry")) {
+        mood.innerText = "Mood: Calm";
+    } else if (msg.includes("happy")) {
+        mood.innerText = "Mood: Excited";
+    } else if (msg.includes("crash")) {
+        mood.innerText = "Mood: Chaotic";
+    } else {
+        mood.innerText = "Mood: Neutral";
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById("message");
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    addMessage(text, "user");
+    updateMood(text);
+    input.value = "";
+
+    addMessage("zer0 is thinking...", "bot");
+
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: text
+            })
+        });
+
+        const data = await res.json();
+
+        chatbox.removeChild(chatbox.lastChild);
+
+        addMessage(data.reply || "No reply found.", "bot");
+
+    } catch (err) {
+        chatbox.removeChild(chatbox.lastChild);
+        addMessage("Backend connection failed.", "bot");
+    }
+}
+
+function clearChat() {
+    chatbox.innerHTML = "";
+}
+
+document.getElementById("message").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
+});
+</script>
+
+</body>
+</html>
